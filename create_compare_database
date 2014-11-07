@@ -1,0 +1,7 @@
+#!/bin/bash
+
+database=employees_compare
+
+mysqladmin drop -f $database
+mysqladmin create $database
+mysql $database < sql/V1__baseline.sql
