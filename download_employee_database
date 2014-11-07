@@ -1,0 +1,7 @@
+#!/bin/bash
+
+cd /vagrant
+
+mkdir data
+wget -N -P ./data https://launchpad.net/test-db/employees-db-1/1.0.6/+download/employees_db-full-1.0.6.tar.bz2
+tar -xjf data/employees_db-full-1.0.6.tar.bz2 --directory data
