@@ -1,0 +1,3 @@
+#!/bin/bash
+
+mysqldbcompare --server1=vagrant@localhost employees:employees_compare --run-all-tests --skip-data-check --skip-row-count 

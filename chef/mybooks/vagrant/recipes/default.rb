@@ -2,6 +2,9 @@ include_recipe 'apt'
 apt_package "ruby1.9.1-dev" do
   action :install
 end
+apt_package "mysql-utilities" do
+  action :install
+end
 
 include_recipe 'mysql::server'
 include_recipe 'database::mysql'
