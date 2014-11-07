@@ -1,5 +1,0 @@
-#!/bin/bash
-
-cd /vagrant/data/employees_db 
-mysqladmin -f drop employees
-mysql -t < employees.sql

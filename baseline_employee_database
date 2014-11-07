@@ -1,8 +1,0 @@
-#!/bin/bash
-
-cd /vagrant
-
-mkdir sql
-mysqldump employees --no-data > sql/V1__baseline.sql 
-
-#Departments might be a table of static data to lookup, but I'm going to assume it isn't. If it were, we could append the inserts to the end of the baseline script with another call to mysqldump

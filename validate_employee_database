@@ -1,5 +1,0 @@
-#!/bin/bash
-
-cd /vagrant/data/employees_db 
-time mysql -t < test_employees_sha.sql
-time mysql -t < test_employees_md5.sql

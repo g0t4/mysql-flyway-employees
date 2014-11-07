@@ -1,0 +1,57 @@
+#!/bin/bash
+
+employees_db_dir=/vagrant/data/employees_db
+baseline_script=/vagrant/sql/V1__baseline.sql
+
+download_employee_database() {
+	mkdir -p /vagrant/data
+	wget -N -P /vagrant/data https://launchpad.net/test-db/employees-db-1/1.0.6/+download/employees_db-full-1.0.6.tar.bz2
+	tar -xjf /vagrant/data/employees_db-full-1.0.6.tar.bz2 --directory /vagrant/data
+}
+
+create_employee_prod_database() {
+  mysqladmin -f drop employees
+
+  pushd $employees_db_dir
+  mysql -t < employees.sql
+  popd
+}
+
+validate_employee_prod_database() {
+  time mysql -t < $employees_db_dir/test_employees_sha.sql
+  time mysql -t < $employees_db_dir/test_employees_md5.sql
+}
+
+baseline_employee_prod() {
+  mkdir -p /vagrant/sql
+  mysqldump employees --no-data > $baseline_script 
+  #Departments might be a table of static data to lookup, but I'm going to assume it isn't. If it were, we could append the inserts to the end of the baseline script with another call to mysqldump
+}
+
+create_database_from_baseline() {
+  if [[ -z "$@" ]]; then
+    echo >&2 "You must supply the name of the database you want to create from the baseline!"
+    return
+  fi
+
+  database=$1
+  mysqladmin drop -f $database
+  mysqladmin create $database
+  mysql $database < $baseline_script
+}
+
+create_dev_database_from_baseline() {
+  create_database_from_baseline employees_dev
+}
+
+create_dev_compare_database_from_baseline() {
+  create_database_from_baseline employees_dev_compare
+}
+
+compare_dev_to_prod() {
+  mysqldbcompare --server1=vagrant@localhost employees:employees_dev --run-all-tests --skip-data-check --skip-row-count 
+}
+
+compare_dev_to_dev_compare() {
+  mysqldbcompare --server1=vagrant@localhost employees_dev:employees_dev_compare --run-all-tests --skip-data-check --skip-row-count 
+}
