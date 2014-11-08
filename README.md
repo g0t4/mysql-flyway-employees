@@ -110,3 +110,9 @@ This workflow might help create the migration script:
   - Can diff dev / dev_compare to review if your migration script synchronizes schemas/data properly 
     - use any tool you like here for comparison/diff
 - Follow above workflow (Test change script) to do one last test of your migration in your dev db
+
+## Other sample mysql databases
+
+Try applying this to another mysql database, great way to learn :)
+
+http://dev.mysql.com/doc/index-other.html
