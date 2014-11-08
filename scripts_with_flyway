@@ -34,8 +34,7 @@ create_database_from_migrations() {
   database=$1
   __dropAndCreateDatabase $database
 
-  initDescription=New_database_marked_as_v0_so_v1_is_applied
-  flyway/flyway init migrate -configFile=$configs/$database.properties -initVersion=0 -initDescription=$initDescription
+  flyway/flyway migrate -configFile=$configs/$database.properties
 }
 
 flyway_info_dev() {
