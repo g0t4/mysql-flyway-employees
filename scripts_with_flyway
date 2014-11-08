@@ -41,7 +41,7 @@ create_dev_compare_database_from_migrations() {
 }
 
 compare_dev_to_prod() {
-  # worth noting that comparing databases named different triggers false positives, might want to use other comparison tools like the mysql workbench which will ignore that, or toad which makes it explicit in the diff but still has a false positive or use red gate's mysql compare
+  # comparing databases named different triggers false positives with mysqldbcompare, might want to use other comparison tools like the mysql workbench which will ignore that, or Toad / red gate's mysql compare which both will ignore database name
   mysqldbcompare --server1=vagrant@localhost employees:employees_dev --run-all-tests --skip-data-check --skip-row-count 
 }
 
