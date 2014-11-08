@@ -14,6 +14,17 @@ flyway_init_prod() {
   flyway_info_prod
 }
 
+__dropAndCreateDatabase(){
+  if [[ -z "$@" ]]; then
+    echo >&2 "You must supply the name of the database you want to drop and create"
+    return
+  fi
+  database=$1
+  dropAndCreate="DROP DATABASE IF EXISTS $database; CREATE DATABASE $database;"
+  echo $dropAndCreate
+  mysql -e "$dropAndCreate"
+}
+
 create_database_from_migrations() {
   if [[ -z "$@" ]]; then
     echo >&2 "You must supply the name of the database you want to create!"
@@ -21,8 +32,7 @@ create_database_from_migrations() {
   fi
 
   database=$1
-  mysqladmin drop -f $database
-  mysqladmin create $database
+  __dropAndCreateDatabase $database
 
   initDescription=New_database_marked_as_v0_so_v1_is_applied
   flyway/flyway init migrate -configFile=$configs/$database.properties -initVersion=0 -initDescription=$initDescription
@@ -59,4 +69,56 @@ flyway_compare() {
 
 flyway_prod() {
   flyway/flyway -configFile=$prodConfig $@
+}
+
+__backup() {
+  if [[ -z "$@" ]]; then
+    echo >&2 "You must supply the name of the database you want to backup"
+    return
+  fi
+  database=$1
+  to_file=${2-$database.sql.gz}
+  echo "Backing up $database to $to_file"
+  mysqldump $database | gzip --fast > $to_file
+}
+
+backup_dev() {
+  __backup employees_dev $@
+}
+
+backup_changed_dev() {
+  __backup employees_dev employees_changed_dev.sql.gz
+}
+
+backup_prod() {
+  __backup employees $@
+}
+
+__restore() {
+  if [[ -z "$@" ]]; then
+    echo >&2 "You must supply the name of the database you want to restore"
+    return
+  fi
+  database=$1
+  # can restore from other sources too if passed as an argument
+  # might want to restore a backup from someone else
+  # could have some shared network location where people can dump their database to and others can fetch from, then one liner for Jane to dump employees_dev.jane.sql.gz and then Bob could run restore_dev /path/to/employees_dev.jane.sql.gz
+  # this would allow Jane and Bob to exchange database test sets easily
+  from_file=${2-$database.sql.gz}
+  __dropAndCreateDatabase $database
+  echo "Restoring $database from $from_file"
+  gunzip < $from_file | mysql $database
+}
+
+restore_dev() {
+  __restore employees_dev $@
+}
+
+restore_dev_compare() {
+  __restore employees_dev_compare $@
+}
+
+clone_dev_to_dev_compare() {
+  __backup employees_dev employees_dev_to_dev_compare.sql.gz
+  __restore employees_dev_compare employees_dev_to_dev_compare.sql.gz
 }
