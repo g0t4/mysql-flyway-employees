@@ -1,0 +1,13 @@
+#!/bin/bash
+
+configs=/vagrant/flyway/conf/
+prodConfig=$configs/employees.properties
+
+flyway_info_prod() {
+  flyway/flyway info -configFile=$prodConfig
+}
+
+flyway_init_prod() {
+  flyway/flyway init -configFile=$prodConfig
+  flyway_info_prod
+}
