@@ -3,6 +3,7 @@
 configs=/vagrant/flyway/conf
 prodConfig=$configs/employees.properties
 devConfig=$configs/employees_dev.properties
+devCompareConfig=$configs/employees_dev_compare.properties
 
 flyway_info_prod() {
   flyway/flyway info -configFile=$prodConfig
@@ -45,4 +46,16 @@ compare_dev_to_prod() {
 
 compare_dev_to_dev_compare() {
   mysqldbcompare --server1=vagrant@localhost employees_dev:employees_dev_compare --run-all-tests --skip-data-check --skip-row-count 
+}
+
+flyway_dev() {
+  flyway/flyway -configFile=$devConfig $@
+}
+
+flyway_compare() {
+  flyway/flyway -configFile=$devCompareConfig $@
+}
+
+flyway_prod() {
+  flyway/flyway -configFile=$prodConfig $@
 }
