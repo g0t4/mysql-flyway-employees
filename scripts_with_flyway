@@ -25,6 +25,17 @@ __dropAndCreateDatabase(){
   mysql -e "$dropAndCreate"
 }
 
+__dropDatabase(){
+  if [[ -z "$@" ]]; then
+    echo >&2 "You must supply the name of the database you want to drop"
+    return
+  fi
+  database=$1
+  drop="DROP DATABASE IF EXISTS $database;"
+  echo $drop
+  mysql -e "$drop"
+}
+
 create_database_from_migrations() {
   if [[ -z "$@" ]]; then
     echo >&2 "You must supply the name of the database you want to create!"
@@ -120,4 +131,47 @@ restore_dev_compare() {
 clone_dev_to_dev_compare() {
   __backup employees_dev employees_dev_to_dev_compare.sql.gz
   __restore employees_dev_compare employees_dev_to_dev_compare.sql.gz
+}
+
+what_changed_in() {
+  # Not only is this great when you are making small changes to review a unified diff, but try running it over larger ranges of changes and you'll see the complexity of trying to figure out what changed. Much like the complexity of figuring out how all the changes were made to code after weeks or months of development. You can see the diff but that doesn't mean you can recreate the path that the changes took. With code the path doesn't matter, but with the database it's very important.
+  if [[ -z "$@" ]]; then
+    echo >&2 "You must supply the versions you want to review changes for!"
+    echo "Usage: what_changed_in 3 4"
+    return
+  fi
+
+  before_version=$1
+  after_version=$2
+  echo "Diffing $before_version to $after_version, results in what_changed folder"
+  mkdir what_changed
+
+  __dropAndCreateDatabase "what_changed_employees_before"
+  __dropAndCreateDatabase "what_changed_employees_after"
+
+  flyway/flyway migrate \
+    -url=jdbc:mysql://localhost/what_changed_employees_before \
+    -configFile=$configs/empty.properties \
+    -target=$before_version
+
+  flyway/flyway migrate \
+    -url=jdbc:mysql://localhost/what_changed_employees_after \
+    -configFile=$configs/empty.properties \
+    -target=$after_version
+
+  before_dump="what_changed/v$before_version.sql"
+  after_dump="what_changed/v$after_version.sql"
+  echo "Dumping databases to $before_dump and $after_dump, you can diff these with your favorite diff tool."
+  mysqldump "what_changed_employees_before" --no-data --skip-comments > $before_dump
+  mysqldump "what_changed_employees_after" --no-data --skip-comments > $after_dump
+
+  patch_file="what_changed/diff_from($before_version)_to($after_version).patch"
+  echo "Comparing and generating a patch of differences to $patch_file"
+  mysqldbcompare --server1=vagrant@localhost \
+    what_changed_employees_before:what_changed_employees_after \
+    --run-all-tests --skip-data-check --skip-row-count \
+    > $patch_file
+
+  __dropDatabase "what_changed_employees_before"
+  __dropDatabase "what_changed_employees_after"
 }
